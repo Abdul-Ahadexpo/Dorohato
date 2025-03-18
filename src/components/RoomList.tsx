@@ -3,7 +3,8 @@ import { ref, onValue, push, set } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Room {
   id: string;
@@ -40,28 +41,33 @@ export function RoomList() {
     e.preventDefault();
     if (!newRoomName.trim()) return;
 
-    const roomsRef = ref(db, 'rooms');
-    const newRoom = {
-      name: newRoomName,
-      createdBy: currentUser?.email,
-      hasPassword: Boolean(newRoomPassword),
-      password: newRoomPassword || null,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const roomsRef = ref(db, 'rooms');
+      const newRoom = {
+        name: newRoomName,
+        createdBy: currentUser?.email,
+        hasPassword: Boolean(newRoomPassword),
+        password: newRoomPassword || null,
+        createdAt: new Date().toISOString()
+      };
 
-    const roomRef = await push(roomsRef);
-    await set(roomRef, newRoom);
+      const roomRef = await push(roomsRef);
+      await set(roomRef, newRoom);
+      toast.success('Room created successfully!');
 
-    setNewRoomName('');
-    setNewRoomPassword('');
-    setShowNewRoom(false);
+      setNewRoomName('');
+      setNewRoomPassword('');
+      setShowNewRoom(false);
+    } catch (error) {
+      toast.error('Failed to create room');
+    }
   };
 
   const joinRoom = async (room: Room) => {
     if (room.hasPassword) {
       const password = prompt('Enter room password:');
       if (password !== room.password) {
-        alert('Incorrect password');
+        toast.error('Incorrect password');
         return;
       }
     }
@@ -69,12 +75,15 @@ export function RoomList() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Chat Rooms</h2>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Chat Rooms</h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Join existing rooms or create your own</p>
+        </div>
         <button
           onClick={() => setShowNewRoom(true)}
-          className="bg-blue-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
+          className="bg-blue-500 text-white rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
         >
           <Plus size={20} />
           New Room
@@ -82,58 +91,73 @@ export function RoomList() {
       </div>
 
       {showNewRoom && (
-        <form onSubmit={createRoom} className="mb-6 p-4 bg-white rounded-lg shadow">
-          <div className="space-y-4">
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <form onSubmit={createRoom} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Room Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Room Name
+              </label>
               <input
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                className="w-full rounded-lg border p-2"
+                className="w-full rounded-lg border dark:border-gray-600 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Password (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Password (optional)
+              </label>
               <input
                 type="password"
                 value={newRoomPassword}
                 onChange={(e) => setNewRoomPassword(e.target.value)}
-                className="w-full rounded-lg border p-2"
+                className="w-full rounded-lg border dark:border-gray-600 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-blue-500 text-white rounded-lg px-4 py-2"
+                className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
               >
                 Create Room
               </button>
               <button
                 type="button"
                 onClick={() => setShowNewRoom(false)}
-                className="bg-gray-200 rounded-lg px-4 py-2"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-4 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
 
-      <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => (
           <div
             key={room.id}
-            className="bg-white p-4 rounded-lg shadow flex justify-between items-center cursor-pointer hover:bg-gray-50"
             onClick={() => joinRoom(room)}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
           >
-            <div>
-              <h3 className="font-medium">{room.name}</h3>
-              <p className="text-sm text-gray-500">Created by {room.createdBy}</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {room.name}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Created by {room.createdBy}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users size={20} className="text-gray-400 dark:text-gray-500" />
+                {room.hasPassword && (
+                  <Lock size={20} className="text-gray-400 dark:text-gray-500" />
+                )}
+              </div>
             </div>
-            {room.hasPassword && <Lock size={20} className="text-gray-400" />}
           </div>
         ))}
       </div>
