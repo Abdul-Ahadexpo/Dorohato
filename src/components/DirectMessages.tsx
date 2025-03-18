@@ -1,0 +1,178 @@
+import React, { useState, useEffect } from 'react';
+import { ref, onValue, push, set, query, orderByChild, equalTo } from 'firebase/database';
+import { db } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
+import { Send, Circle } from 'lucide-react';
+
+interface User {
+  email: string;
+  online: boolean;
+  lastSeen: string;
+}
+
+interface Message {
+  id: string;
+  text: string;
+  sender: string;
+  timestamp: string;
+}
+
+export function DirectMessages() {
+  const { currentUser } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+
+  useEffect(() => {
+    const usersRef = ref(db, 'users');
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const userList = Object.entries(data)
+          .map(([id, user]: [string, any]) => ({
+            id,
+            ...user,
+          }))
+          .filter((user) => user.email !== currentUser?.email);
+        setUsers(userList);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!selectedUser || !currentUser) return;
+
+    const chatId = [currentUser.email, selectedUser]
+      .sort()
+      .join('_')
+      .replace(/[.#$\[\]]/g, '_');
+
+    const messagesRef = ref(db, `direct_messages/${chatId}/messages`);
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const messageList = Object.entries(data).map(([id, msg]: [string, any]) => ({
+          id,
+          ...msg,
+        }));
+        setMessages(messageList.sort((a, b) => 
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        ));
+      } else {
+        setMessages([]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [selectedUser, currentUser]);
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedUser || !currentUser) return;
+
+    const chatId = [currentUser.email, selectedUser]
+      .sort()
+      .join('_')
+      .replace(/[.#$\[\]]/g, '_');
+
+    const messagesRef = ref(db, `direct_messages/${chatId}/messages`);
+    await push(messagesRef, {
+      text: newMessage,
+      sender: currentUser.email,
+      timestamp: new Date().toISOString()
+    });
+
+    setNewMessage('');
+  };
+
+  return (
+    <div className="flex h-screen">
+      <div className="w-64 border-r bg-gray-50 p-4">
+        <h2 className="text-xl font-bold mb-4">Direct Messages</h2>
+        <div className="space-y-2">
+          {users.map((user) => (
+            <div
+              key={user.id}
+              onClick={() => setSelectedUser(user.email)}
+              className={`p-2 rounded-lg cursor-pointer flex items-center gap-2 ${
+                selectedUser === user.email ? 'bg-blue-100' : 'hover:bg-gray-100'
+              }`}
+            >
+              <Circle
+                size={8}
+                className={user.online ? 'text-green-500' : 'text-gray-400'}
+                fill={user.online ? 'currentColor' : 'none'}
+              />
+              <span>{user.email}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        {selectedUser ? (
+          <>
+            <div className="p-4 border-b bg-white">
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">{selectedUser}</h3>
+                {users.find(u => u.email === selectedUser)?.online && (
+                  <span className="text-sm text-green-500">online</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.sender === currentUser?.email ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      message.sender === currentUser?.email
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    <p>{message.text}</p>
+                    <span className="text-xs opacity-70">
+                      {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={sendMessage} className="p-4 border-t bg-white">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 rounded-lg border p-2"
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white rounded-lg px-4 py-2"
+                >
+                  <Send size={20} />
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            Select a user to start chatting
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
