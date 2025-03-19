@@ -3,7 +3,7 @@ import { ref, onValue, push, set, query, orderByChild, equalTo } from 'firebase/
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
-import { Send, Circle } from 'lucide-react';
+import { Send, Circle, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface User {
@@ -32,11 +32,11 @@ export function DirectMessages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [showUserList, setShowUserList] = useState(true);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    // Listen for DM invitations
     const invitesRef = ref(db, `direct_message_invites/${currentUser.email?.replace('.', '_')}`);
     const unsubscribe = onValue(invitesRef, (snapshot) => {
       const data = snapshot.val();
@@ -60,7 +60,6 @@ export function DirectMessages() {
             ...user,
           }))
           .filter((user) => {
-            // Only show users who have invited you or you've invited
             const userEmail = user.email;
             return (
               userEmail !== currentUser?.email &&
@@ -121,15 +120,22 @@ export function DirectMessages() {
     setNewMessage('');
   };
 
+  const handleUserSelect = (email: string) => {
+    setSelectedUser(email);
+    setShowUserList(false);
+  };
+
   return (
-    <div className="flex h-screen">
-      <div className="w-64 border-r bg-gray-50 dark:bg-gray-800 p-4">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)]">
+      <div className={`${
+        showUserList ? 'block' : 'hidden'
+      } md:block md:w-64 border-r bg-gray-50 dark:bg-gray-800 p-4 h-full`}>
         <h2 className="text-xl font-bold mb-4">Direct Messages</h2>
         <div className="space-y-2">
           {users.map((user) => (
             <div
               key={user.id}
-              onClick={() => setSelectedUser(user.email)}
+              onClick={() => handleUserSelect(user.email)}
               className={`p-2 rounded-lg cursor-pointer flex items-center gap-2 ${
                 selectedUser === user.email ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
@@ -145,15 +151,25 @@ export function DirectMessages() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className={`${
+        !showUserList ? 'block' : 'hidden'
+      } md:block flex-1 flex flex-col h-full`}>
         {selectedUser ? (
           <>
             <div className="p-4 border-b bg-white dark:bg-gray-800">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium">{selectedUser}</h3>
-                {users.find(u => u.email === selectedUser)?.online && (
-                  <span className="text-sm text-green-500">online</span>
-                )}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowUserList(true)}
+                  className="md:hidden text-gray-600 dark:text-gray-300"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium">{selectedUser}</h3>
+                  {users.find(u => u.email === selectedUser)?.online && (
+                    <span className="text-sm text-green-500">online</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -166,13 +182,13 @@ export function DirectMessages() {
                   }`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 ${
+                    className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 ${
                       message.sender === currentUser?.email
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 dark:text-white'
                     }`}
                   >
-                    <p>{message.text}</p>
+                    <p className="break-words">{message.text}</p>
                     <span className="text-xs opacity-70">
                       {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
                     </span>
@@ -192,7 +208,7 @@ export function DirectMessages() {
                 />
                 <button
                   type="submit"
-                  className="bg-blue-500 text-white rounded-lg px-4 py-2"
+                  className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
                 >
                   <Send size={20} />
                 </button>
