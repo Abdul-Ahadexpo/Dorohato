@@ -207,7 +207,8 @@ export function ChatRoom() {
       </div>
 
       <div className="flex flex-1 relative">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+       <div className="flex-1 overflow-y-auto p-4 space-y-4 h-[calc(100vh-12rem)]">
+
           {messages.map((message) => (
             <div
               key={message.id}
