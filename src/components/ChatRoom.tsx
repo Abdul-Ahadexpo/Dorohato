@@ -4,7 +4,7 @@ import { ref, onValue, push, set, remove } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
-import { Send, Trash2, UserPlus, Users } from 'lucide-react';
+import { Send, Trash2, UserPlus, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Message {
@@ -48,7 +48,6 @@ export function ChatRoom() {
   useEffect(() => {
     if (!roomId) return;
 
-    // Track room membership
     const memberRef = ref(db, `rooms/${roomId}/members/${currentUser?.uid}`);
     set(memberRef, {
       email: currentUser?.email,
@@ -56,7 +55,6 @@ export function ChatRoom() {
       online: true
     });
 
-    // Remove member when leaving
     return () => {
       remove(memberRef);
     };
@@ -159,14 +157,14 @@ export function ChatRoom() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-        <h2 className="text-xl font-bold">{room?.name}</h2>
+        <h2 className="text-xl font-bold truncate">{room?.name}</h2>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowMembers(!showMembers)}
             className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-500"
           >
             <Users size={20} />
-            <span>{members.length} Members</span>
+            <span className="hidden sm:inline">{members.length} Members</span>
           </button>
           {room?.createdBy === currentUser?.email && (
             <button
@@ -179,7 +177,7 @@ export function ChatRoom() {
         </div>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
             <div
@@ -189,14 +187,16 @@ export function ChatRoom() {
               }`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 ${
                   message.sender === currentUser?.email
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium opacity-90">{message.sender}</span>
+                  <span className="text-sm font-medium opacity-90 truncate">
+                    {message.sender}
+                  </span>
                   {message.sender === currentUser?.email && (
                     <button
                       onClick={() => handleDelete(message.id)}
@@ -206,7 +206,7 @@ export function ChatRoom() {
                     </button>
                   )}
                 </div>
-                <p className="mt-1">{message.text}</p>
+                <p className="mt-1 break-words">{message.text}</p>
                 <span className="text-xs opacity-70">
                   {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
                 </span>
@@ -217,8 +217,16 @@ export function ChatRoom() {
         </div>
 
         {showMembers && (
-          <div className="w-64 border-l dark:border-gray-700 p-4 overflow-y-auto">
-            <h3 className="font-bold mb-4">Room Members</h3>
+          <div className="absolute md:relative right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 border-l dark:border-gray-700 p-4 overflow-y-auto z-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold">Room Members</h3>
+              <button
+                onClick={() => setShowMembers(false)}
+                className="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
             <div className="space-y-2">
               {members.map((member) => (
                 <div key={member.email} className="flex items-center justify-between">
@@ -228,7 +236,7 @@ export function ChatRoom() {
                         member.online ? 'bg-green-500' : 'bg-gray-400'
                       }`}
                     />
-                    <span>{member.username || member.email}</span>
+                    <span className="truncate">{member.username || member.email}</span>
                   </div>
                   {member.email !== currentUser?.email && (
                     <button
