@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Home, MessageSquare, LogOut, Sun, Moon, User, Menu, X } from 'lucide-react';
+import { Notifications } from './Notifications';
 import toast from 'react-hot-toast';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -57,6 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             
             <div className="hidden md:flex items-center space-x-4">
+              <Notifications />
               <button
                 onClick={() => setShowUsernameModal(true)}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
@@ -80,7 +82,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center space-x-2">
+              <Notifications />
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"

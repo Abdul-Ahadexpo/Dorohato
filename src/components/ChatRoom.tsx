@@ -85,13 +85,32 @@ export function ChatRoom() {
           ...msg,
         }));
         setMessages(messageList);
+
+        // Create notification for new messages
+        const lastMessage = messageList[messageList.length - 1];
+        if (
+          lastMessage.sender !== currentUser?.email &&
+          new Date(lastMessage.timestamp).getTime() > Date.now() - 1000
+        ) {
+          const notificationRef = push(
+            ref(db, `notifications/${lastMessage.sender.replace('.', '_')}`)
+          );
+          set(notificationRef, {
+            type: 'message',
+            sender: currentUser?.email,
+            roomId,
+            roomName: room?.name,
+            timestamp: new Date().toISOString(),
+            read: false
+          });
+        }
       } else {
         setMessages([]);
       }
     });
 
     return () => unsubscribe();
-  }, [roomId]);
+  }, [roomId, currentUser, room]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,6 +162,16 @@ export function ChatRoom() {
 
   const inviteToDirectMessage = async (memberEmail: string) => {
     try {
+      const notificationRef = push(
+        ref(db, `notifications/${memberEmail.replace('.', '_')}`)
+      );
+      await set(notificationRef, {
+        type: 'invite',
+        sender: currentUser?.email,
+        timestamp: new Date().toISOString(),
+        read: false
+      });
+      
       const inviteRef = ref(db, `direct_message_invites/${memberEmail.replace('.', '_')}`);
       await push(inviteRef, {
         from: currentUser?.email,
