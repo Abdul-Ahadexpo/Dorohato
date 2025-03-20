@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Home, MessageSquare, LogOut, Sun, Moon, User, Menu, X } from 'lucide-react';
+import { Home, MessageSquare, LogOut, Sun, Moon, User, Menu, X, Book } from 'lucide-react';
 import { Notifications } from './Notifications';
+import { SearchModal } from './SearchModal';
 import toast from 'react-hot-toast';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -54,6 +56,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <MessageSquare size={20} />
                   <span>Direct Messages</span>
                 </Link>
+                <a
+                  href="https://doro-novelo.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  <Book size={20} />
+                  <span>Novel Site</span>
+                </a>
+                <button
+                  onClick={() => setShowSearchModal(true)}
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                >
+                  Search
+                </button>
               </div>
             </div>
             
@@ -106,6 +123,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span>Direct Messages</span>
                 </div>
               </Link>
+              <a
+                href="https://doro-novelo.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="flex items-center space-x-2">
+                  <Book size={20} />
+                  <span>Novel Site</span>
+                </div>
+              </a>
+              <button
+                onClick={() => {
+                  setShowSearchModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full text-left py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Search
+              </button>
               <button
                 onClick={() => {
                   setShowUsernameModal(true);
@@ -143,6 +181,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </nav>
+
+      {showSearchModal && (
+        <SearchModal onClose={() => setShowSearchModal(false)} />
+      )}
 
       {showUsernameModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
