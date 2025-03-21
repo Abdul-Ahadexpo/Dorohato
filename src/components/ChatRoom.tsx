@@ -7,6 +7,25 @@ import { formatDistanceToNow } from 'date-fns';
 import { Send, Trash2, UserPlus, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+
+
+const renderMessageText = (text) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map((part, index) =>
+    urlRegex.test(part) ? (
+      <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+};
+
+
+
+
+
 interface Message {
   id: string;
   text: string;
@@ -209,40 +228,49 @@ export function ChatRoom() {
       <div className="flex flex-1 relative">
        <div className="flex-1 overflow-y-auto p-4 space-y-4 h-[calc(100vh-12rem)]">
 
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.sender === currentUser?.email ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 ${
-                  message.sender === currentUser?.email
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium opacity-90 truncate">
-                    {message.sender}
-                  </span>
-                  {message.sender === currentUser?.email && (
-                    <button
-                      onClick={() => handleDelete(message.id)}
-                      className="text-sm opacity-70 hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-                <p className="mt-1 break-words">{message.text}</p>
-                <span className="text-xs opacity-70">
-                  {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
-                </span>
-              </div>
-            </div>
-          ))}
+
+
+
+
+
+
+
+
+{messages.map((message) => (
+  <div
+    key={message.id}
+    className={`flex ${message.sender === currentUser?.email ? 'justify-end' : 'justify-start'}`}
+  >
+    <div
+      className={`max-w-[85%] md:max-w-[70%] rounded-lg p-3 ${
+        message.sender === currentUser?.email ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium opacity-90 truncate">{message.sender}</span>
+        {message.sender === currentUser?.email && (
+          <button
+            onClick={() => handleDelete(message.id)}
+            className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
+      <p className="mt-1 break-words">{renderMessageText(message.text)}</p>
+      <span className="text-xs opacity-70">
+        {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+      </span>
+    </div>
+  </div>
+))}
+
+         
+         
+
+
+         
+         
           <div ref={messagesEndRef} />
         </div>
 
