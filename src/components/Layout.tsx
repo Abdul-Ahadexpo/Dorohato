@@ -65,12 +65,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Book size={20} />
                   <span>Novel Site</span>
                 </a>
-                <button
-                  onClick={() => setShowSearchModal(true)}
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                >
-                  Search
-                </button>
+
+
+
+                
+              <button
+  onClick={() => setShowSearchModal(true)}
+  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-2"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    className="w-5 h-5"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm8-2l4 4"
+    />
+  </svg>
+  Search
+</button>
+
+
+                
+
+                
               </div>
             </div>
             
