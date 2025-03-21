@@ -13,7 +13,7 @@ const renderMessageText = (text) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.split(urlRegex).map((part, index) =>
     urlRegex.test(part) ? (
-      <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-pink-500">
+      <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-white to-purple-500 bg-clip-text text-transparent">
         {part}
       </a>
     ) : (
