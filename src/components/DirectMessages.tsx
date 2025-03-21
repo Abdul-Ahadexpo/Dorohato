@@ -6,6 +6,23 @@ import { formatDistanceToNow } from 'date-fns';
 import { Send, Circle, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+
+const renderMessageText = (text) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map((part, index) =>
+    urlRegex.test(part) ? (
+      <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-white underline hover:text-blue-300">
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+};
+
+
+
+
 interface User {
   email: string;
   username: string;
